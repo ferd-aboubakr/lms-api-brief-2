@@ -1,0 +1,15 @@
+$kind: http-request
+url: http://localhost:3000/api/modules/6ac8d70c5e11c18dc7ce64b5/6acd4faaad9ab239bfca60b5
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \        \"title\": \"Introduction à JavaScript test update\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_10zd}}"
+order: 1128224675839604
