@@ -1,0 +1,17 @@
+$kind: http-request
+url: http://localhost:3000/api/courses/6accbbe745e61c0c2c9231d6
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"title\": \"Test Node.js \",\r
+
+    \  \"duration\": 12\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_10zd}}"
+order: 4078533484814069
