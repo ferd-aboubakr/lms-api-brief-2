@@ -1,0 +1,9 @@
+$kind: http-request
+name: Depublier un course
+url: http://localhost:3000/api/courses/6accbbe745e61c0c2c9231d6/unpublish
+method: PATCH
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_10zd}}"
+order: 4356650577441831

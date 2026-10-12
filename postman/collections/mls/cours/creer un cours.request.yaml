@@ -1,0 +1,31 @@
+$kind: http-request
+url: http://localhost:3000/api/courses
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"title\": \"Test Node.js\",\r
+
+    \  \"description\": \"Cours de test pour le Brief 2\",\r
+
+    \  \"objectives\": [\r
+
+    \    \"Comprendre Node.js\",\r
+
+    \    \"Créer une API\"\r
+
+    \  ],\r
+
+    \  \"level\": \"beginner\",\r
+
+    \  \"category\": \"Backend\",\r
+
+    \  \"duration\": 10\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token}}"
+order: 3901683287607685

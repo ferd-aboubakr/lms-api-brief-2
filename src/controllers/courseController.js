@@ -135,7 +135,7 @@ export async function publishCourse(req, res, next) {
     const isAdmin = req.user.role === 'admin';
     const isOwner = req.user.id.toString() === course.trainer.toString()
 
-    if (!isAdmin || !isOwner) {
+    if (!isAdmin && !isOwner) {
       return res.status(403).json({
         message: "Accès refusé : vous ne pouvez modifier que vos propres cours"
       });
@@ -149,7 +149,7 @@ export async function publishCourse(req, res, next) {
     course.status = 'published'
     course.publishedAt = new Date()
 
-    await Course.save()
+    await course.save()
 
     res.status(200).json({
       message: 'Course published successfully',
@@ -176,7 +176,7 @@ export async function unpublishCourse(req, res, next) {
     const isAdmin = req.user.role === 'admin';
     const isOwner = req.user.id.toString() === course.trainer.toString()
 
-    if (!isAdmin || !isOwner) {
+    if (!isAdmin && !isOwner) {
       return res.status(403).json({
         message: "Accès refusé : vous ne pouvez modifier que vos propres cours"
       });
@@ -190,7 +190,7 @@ export async function unpublishCourse(req, res, next) {
     course.status = 'draft';
     course.publishedAt = new Date()
 
-    await Course.save()
+    await course.save()
 
     res.status(200).json({
       message: 'Course unpublished  successfully',
