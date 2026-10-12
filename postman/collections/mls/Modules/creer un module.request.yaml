@@ -1,0 +1,21 @@
+$kind: http-request
+url: http://localhost:3000/api/modules/6ac8d70c5e11c18dc7ce64b5
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \        \"title\": \"Introduction à JavaScript\",\r
+
+    \        \"description\": \"Découvrir les fondamentaux de JavaScript\",\r
+
+    \        \"order\": 1,\r
+
+    \        \"duration\": 5\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_10zd}}"
+order: 1791825988706
