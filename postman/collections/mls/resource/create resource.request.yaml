@@ -1,0 +1,25 @@
+$kind: http-request
+url: http://localhost:3000/api/resources/6acd4faaad9ab239bfca60b5/
+method: POST
+body:
+  type: json
+  content: "\r
+
+    {\r
+
+    \  \"title\": \"Introduction to JavaScript\",\r
+
+    \  \"type\": \"pdf\",\r
+
+    \  \"url\": \"https://example.com/javascript.pdf\",\r
+
+    \  \"description\": \"Support de cours sur les bases de JavaScript\",\r
+
+    \  \"order\": 1\r
+
+    }\r\n"
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_10zd}}"
+order: 1791890996839

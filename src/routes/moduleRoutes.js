@@ -8,7 +8,6 @@ const router = express.Router();
 
 router.get('/', getModules);
 router.get('/:id/modules' ,getModulesByCourse);
-router.get('/:id/resources', getResourcesByModule);
 router.post('/:id/',auth , authorize('admin' ,'trainer'),createModule)
 router.put('/:id/:moduleId',auth , authorize('admin' ,'trainer'),updateModule)
 
