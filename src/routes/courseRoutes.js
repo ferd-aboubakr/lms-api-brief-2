@@ -9,7 +9,6 @@ const router = express.Router();
 
 router.get('/' , getCourses);
 router.get('/:id' , getCourseById);
-router.get('/:id/modules' ,getModulesByCourse);
 router.post('/', auth , authorize('admin' ,'trainer') ,createCourse);
 router.put('/:id', auth , authorize('admin' ,'trainer') ,updateCourse);
 router.patch('/:id/publish', auth , authorize('admin' ,'trainer') ,publishCourse);

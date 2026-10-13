@@ -14,6 +14,13 @@ export async function getModules(req, res, next) {
 export async function getModulesByCourse(req, res, next) {
   try {
     const { id } = req.params;
+    const course = await Course.findById(id)
+
+    if (!course || course.status !== 'published') {
+      return res.status(404).json({
+        message: 'Course not found'
+      });
+    }
 
     const modules = await Module.find({
       course: id,
@@ -63,7 +70,7 @@ export async function createModule(req, res, next) {
 
 export async function updateModule(req, res, next) {
   try {
-    const { title, description, order, duration } = req.body
+    const { title, description, order, duration, status } = req.body
     const { id, moduleId } = req.params
 
     const course = await Course.findById(id);
@@ -92,7 +99,7 @@ export async function updateModule(req, res, next) {
 
     const updateModule = await Module.findByIdAndUpdate(
       moduleId,
-      { $set: { title, description, order, duration  } },
+      { $set: { title, description, order, duration, status } },
       { new: true, runValidators: true }
     )
 
