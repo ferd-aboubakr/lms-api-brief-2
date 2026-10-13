@@ -2,22 +2,34 @@ $kind: http-request
 url: http://localhost:3000/api/resources/6acd4faaad9ab239bfca60b5/
 method: POST
 body:
-  type: json
-  content: "\r
-
-    {\r
-
-    \  \"title\": \"Introduction to JavaScript\",\r
-
-    \  \"type\": \"pdf\",\r
-
-    \  \"url\": \"https://example.com/javascript.pdf\",\r
-
-    \  \"description\": \"Support de cours sur les bases de JavaScript\",\r
-
-    \  \"order\": 1\r
-
-    }\r\n"
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: Introduction JavaScript
+      description: ""
+      disabled: false
+    - type: text
+      key: type
+      value: pdf
+      description: ""
+      disabled: false
+    - type: text
+      key: description
+      value: Support du cours
+      description: ""
+      disabled: false
+    - type: text
+      key: order
+      value: "1"
+      description: ""
+      disabled: false
+    - type: file
+      key: file
+      src:
+        - /C:/Users/pc/Downloads/LMS_Brief2_Repartition_Binome.pdf
+      description: ""
+      disabled: false
 auth:
   type: bearer
   credentials:
