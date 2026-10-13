@@ -38,7 +38,7 @@ export async function createResource(req, res, next) {
   try {
     const { id } = req.params
     const { title, type, description, order } = req.body
-    const url = req.file ? `/uploads/${req.file.filename}` : null;
+    const url = req.file ? `/uploads/${new Date + '-' + req.file.filename}` : null;
 
     const module = await Module.findById(id)
 
@@ -80,6 +80,69 @@ export async function createResource(req, res, next) {
       message: 'resource created successfully',
       resource
     })
+  } catch (err) {
+    next(err)
+  }
+
+}
+
+export async function updateResource(req, res, next) {
+  try {
+    console.log(req.body)
+    const { id, resourceId } = req.params
+    const { title, type, description, order } = req.body
+    const url = req.file ? `/uploads/${new Date + '-' + req.file.filename}` : null;
+
+    let data = { title, type, description, order }
+
+    const resource = await Resource.findById(resourceId)
+
+    if (!resource) {
+      return res.status(404).json({
+        message: 'module not found'
+      })
+    }
+
+    const module = await Module.findById(id)
+
+    if (!module) {
+      return res.status(404).json({
+        message: 'module not found'
+      })
+    }
+
+    const course = await Course.findById(module.course)
+
+    if (!course) {
+      return res.status(404).json({
+        message: 'course not found'
+      })
+    }
+
+    const isOwner = req.user.id.toString() === course.trainer.toString()
+    const isAdmin = req.user.role === 'admin'
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        message: 'Access denied'
+      })
+    }
+
+    if (url) {
+      data.url = url
+    }
+
+    const updateResource = await Resource.findByIdAndUpdate(
+      resourceId,
+      {set: data},
+      {new: true , runValidators:true}
+    )
+
+    res.status(200).json({
+      message: 'resource updated successfull',
+      updateResource
+    })
+
   } catch (err) {
     next(err)
   }
