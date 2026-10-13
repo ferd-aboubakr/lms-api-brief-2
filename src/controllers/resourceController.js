@@ -37,7 +37,8 @@ export async function getResourcesByModule(req, res, next) {
 export async function createResource(req, res, next) {
   try {
     const { id } = req.params
-    const { title, type, url, description, order } = req.body
+    const { title, type, description, order } = req.body
+    const url = req.file ? `/uploads/${req.file.filename}` : null;
 
     const module = await Module.findById(id)
 
@@ -57,11 +58,17 @@ export async function createResource(req, res, next) {
 
     const isOwner = req.user.id.toString() === course.trainer.toString()
     const isAdmin = req.user.role === 'admin'
-    
-    if(!isOwner && !isAdmin){
+
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({
-        message : 'Access denied'
+        message: 'Access denied'
       })
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: 'A file is required'
+      });
     }
 
     const resource = await Resource.create({
