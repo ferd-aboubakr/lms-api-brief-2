@@ -13,9 +13,10 @@ const progressSchema = new mongoose.Schema(
     },
 
     // Array of Resource IDs that the learner has completed
-    // Example: ['resourceId1', 'resourceId2', 'resourceId3']
+    // Example: ['resourceId1', 'resourceId.....
     completedResources: [
       {
+        
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Resource',
       },
