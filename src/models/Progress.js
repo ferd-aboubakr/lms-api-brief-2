@@ -77,8 +77,12 @@ const progressSchema = new mongoose.Schema(
 
 /**
  * INDEX
+ * Anti-doublon: Exactly one progress record per learner per course
  * Makes queries by enrollment very fast
+ * 
  */
+
+progressSchema.index({ learner: 1, course: 1 }, { unique: true })
 progressSchema.index({ enrollment: 1 });
 
 const Progress = mongoose.model('Progress', progressSchema);
