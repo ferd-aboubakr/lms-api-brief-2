@@ -8,6 +8,7 @@ import moduleRoutes from './routes/moduleRoutes.js';
 import resourceRoutes from './routes/resourceRoutes.js';
 import authRoute from './routes/authRoutes.js'
 import enrollmentRoutes from './routes/enrollmentRoutes.js'
+import progressRoutes from './routes/progressRoutes.js'
 
 import { notFound } from './middlewares/notFound.js';
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -19,6 +20,7 @@ app.use('/api/modules', moduleRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/auth', authRoute);
 app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/progress', progressRoutes);
 
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
