@@ -3,12 +3,14 @@ import { createResource, getResources ,getResourcesByModule , updateResource } f
 import { auth } from '../middlewares/auth.js';
 import { authorize } from '../middlewares/authorize.js';
 import upload from '../middlewares/upload.js';
+import { validate } from '../middlewares/validate.js';
+import { createResourceSchema, updateResourceSchema } from '../validators/resourceValidator.js';
 
 const router = express.Router();
 
 router.get('/', getResources);
 router.get('/:id/resources', getResourcesByModule);
-router.post('/:id/',auth , authorize('admin' , 'trainer'), upload.single('file') ,createResource)
-router.put('/:id/:resourceId',auth , authorize('admin' , 'trainer'), upload.single('file') , updateResource)
+router.post('/:id/',auth , authorize('admin' , 'trainer'),validate(createResourceSchema), upload.single('file') ,createResource)
+router.put('/:id/:resourceId',auth , authorize('admin' , 'trainer'),validate(updateResourceSchema) , upload.single('file') , updateResource)
 
 export default router;
