@@ -196,3 +196,116 @@ export function getModuleState(progress, targetModule, allCourseModules, moduleR
     }
     return 'accessible';
 }
+
+
+/**
+ * COMPLETE A MODULE
+ * Route: POST /api/modules/:id/complete
+ * Access: Private (learner)
+ */
+export async function completeModule(req, res, next) {
+  try {
+    const moduleId = req.params.id;
+    const learnerId = req.user.id;
+
+    // 1. Find module
+    const targetModule = await Module.findById(moduleId);
+    if (!targetModule) {
+      return res.status(404).json({ message: 'Module not found' });
+    }
+
+    const courseId = targetModule.course;
+
+    // 2. Check active enrollment
+    const enrollment = await Enrollment.findOne({
+      learner: learnerId,
+      course: courseId,
+      status: 'active',
+    });
+
+    if (!enrollment) {
+      return res.status(403).json({
+        message: 'You are not actively enrolled in this course',
+      });
+    }
+
+    // 3. Find progress
+    let progress = await Progress.findOne({ learner: learnerId, course: courseId });
+    if (!progress) {
+      return res.status(404).json({ message: 'Progress not found for this course' });
+    }
+
+    // 4. Check if module is locked
+    const allCourseModules = await Module.find({ course: courseId }).sort({ order: 1 });
+    const state = getModuleState(progress, targetModule, allCourseModules);
+
+    if (state === 'locked') {
+      return res.status(403).json({
+        message: 'Cannot complete module: previous modules are not completed yet',
+      });
+    }
+
+    // 5. Check if all resources in this module are completed
+    const moduleResources = await Resource.find({ module: moduleId });
+    const moduleResourceIds = moduleResources.map((r) => r._id.toString());
+    const completedResourceIds = progress.completedResources.map((id) => id.toString());
+
+    const allResourcesDone = moduleResourceIds.every((rId) =>
+      completedResourceIds.includes(rId)
+    );
+
+    if (!allResourcesDone) {
+      return res.status(400).json({
+        message: 'Cannot complete module: all resources in this module must be completed first',
+        totalResources: moduleResourceIds.length,
+        completedInModule: moduleResourceIds.filter((rId) => completedResourceIds.includes(rId)).length,
+      });
+    }
+
+    // 6. Mark module completed (idempotent)
+    const isAlreadyCompleted = progress.completedModules.some(
+      (mId) => mId.toString() === moduleId.toString()
+    );
+
+    if (!isAlreadyCompleted) {
+      progress.completedModules.push(targetModule._id);
+    }
+
+    // 7. Recalculate course percentage
+    progress.progressPercentage = Math.round(
+      (progress.completedModules.length / allCourseModules.length) * 100
+    );
+
+    // 8. Find and set the next incomplete module
+    const nextIncompleteModule = allCourseModules.find(
+      (m) =>
+        !progress.completedModules.some(
+          (cId) => cId.toString() === m._id.toString()
+        )
+    );
+    progress.currentModule = nextIncompleteModule ? nextIncompleteModule._id : targetModule._id;
+    progress.lastAccessedAt = new Date();
+
+    // 9. If all modules completed, complete the enrollment
+    if (progress.progressPercentage === 100) {
+      await Enrollment.findByIdAndUpdate(enrollment._id, {
+        status: 'completed',
+        completedAt: new Date(),
+      });
+    }
+
+    await progress.save();
+
+    return res.status(200).json({
+      message: 'Module marked as completed successfully',
+      progress: {
+        progressPercentage: progress.progressPercentage,
+        completedModulesCount: progress.completedModules.length,
+        currentModule: progress.currentModule,
+      },
+      courseCompleted: progress.progressPercentage === 100,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
