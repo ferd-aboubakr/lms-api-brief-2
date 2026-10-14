@@ -4,12 +4,22 @@ import mongoose from 'mongoose';
 
 const progressSchema = new mongoose.Schema(
   {
+    learner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    course: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Course',
+      required: true,
+    },
+
     // Link to the enrollment (which links learner + course)
     enrollment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Enrollment',
       required: true,
-      unique: true, // Each enrollment has ONE progress document
     },
 
     // Array of Resource IDs that the learner has completed
