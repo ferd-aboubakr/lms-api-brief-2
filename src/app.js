@@ -17,6 +17,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/auth', authRoute);
+app.use('/api/enrollment', enrollmentRoutes);
 
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
