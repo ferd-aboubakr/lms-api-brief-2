@@ -44,8 +44,6 @@ const enrollmentSchema = new mongoose.Schema(
   }
 );
 
-// Compound unique index: learner cannot enroll in the same course multiple times
-enrollmentSchema.index({ learner: 1, course: 1 }, { unique: true });
 
 const Enrollment = mongoose.model('Enrollment', enrollmentSchema);
 
