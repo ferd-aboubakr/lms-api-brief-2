@@ -7,6 +7,12 @@ import Progress from '../models/Progress.js';
  * Endpoint: POST /api/enrollments
  * Access: Private (learner)
  * Body: { courseId }
+ *
+ * Rules:
+ * - Only published courses
+ * - 409 if already actively enrolled
+ * - Re-activates or creates new enrollment if previously cancelled
+ * - Creates/links Progress document
  */
 export async function enrollCourse(req, res, next) {
   try {
@@ -19,7 +25,7 @@ export async function enrollCourse(req, res, next) {
       });
     }
 
-    // 1. Verify that course exists and is published
+    // 1. Verify course exists and is published
     const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({
@@ -33,47 +39,20 @@ export async function enrollCourse(req, res, next) {
       });
     }
 
-    // 2. Check if learner is already enrolled
-    const existingEnrollment = await Enrollment.findOne({
+    // 2. Check for an already active enrollment
+    const activeEnrollment = await Enrollment.findOne({
       learner: learnerId,
-      course: courseId
+      course: courseId,
+      status: 'active'
     });
 
-    if (existingEnrollment) {
-      if (existingEnrollment.status === 'active') {
-        return res.status(409).json({
-          message: 'You are already enrolled in this course'
-        });
-      }
-      // If previously cancelled, re-activate enrollment
-      existingEnrollment.status = 'active';
-      existingEnrollment.enrolledAt = new Date();
-      await existingEnrollment.save();
-
-      // Ensure progress exists
-      let progress = await Progress.findOne({ enrollment: existingEnrollment._id });
-      if (!progress) {
-        progress = await Progress.create({
-          enrollment: existingEnrollment._id,
-          completedResources: [],
-          completedModules: [],
-          progressPercentage: 0
-        });
-      }
-
-      await existingEnrollment.populate('course', 'title description level category');
-
-      return res.status(200).json({
-        message: 'Successfully re-enrolled in course',
-        enrollment: existingEnrollment,
-        progress: {
-          progressPercentage: progress.progressPercentage,
-          completedModules: progress.completedModules.length
-        }
+    if (activeEnrollment) {
+      return res.status(409).json({
+        message: 'You are already enrolled in this course'
       });
     }
 
-    // 3. Create new enrollment
+    // 3. Create active enrollment
     const enrollment = await Enrollment.create({
       learner: learnerId,
       course: courseId,
@@ -81,30 +60,36 @@ export async function enrollCourse(req, res, next) {
       enrolledAt: new Date()
     });
 
-    // 4. Initialize progress tracking document for this enrollment
-    let progress;
-    try {
+    // 4. Ensure progress tracking document exists for this learner & course
+    let progress = await Progress.findOne({
+      learner: learnerId,
+      course: courseId
+    });
+
+    if (!progress) {
       progress = await Progress.create({
+        learner: learnerId,
+        course: courseId,
         enrollment: enrollment._id,
         completedResources: [],
         completedModules: [],
         progressPercentage: 0
       });
-    } catch (progressError) {
-      console.error('Error initializing progress:', progressError);
+    } else {
+      progress.enrollment = enrollment._id;
+      await progress.save();
     }
 
-    await enrollment.populate('course', 'title description level category');
+    await enrollment.populate('course', 'title description level category duration');
 
     return res.status(201).json({
       message: 'Successfully enrolled in course',
       enrollment,
-      progress: progress
-        ? {
-            progressPercentage: progress.progressPercentage,
-            completedModules: progress.completedModules.length
-          }
-        : null
+      progress: {
+        progressPercentage: progress.progressPercentage,
+        completedModules: progress.completedModules.length,
+        completedResources: progress.completedResources.length
+      }
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -135,10 +120,13 @@ export async function listEnrollments(req, res, next) {
       .populate('course', 'title description level category duration status')
       .sort({ createdAt: -1 });
 
-    // Attach progress info to each enrollment if available
     const enrollmentsWithProgress = await Promise.all(
       enrollments.map(async (enr) => {
-        const progress = await Progress.findOne({ enrollment: enr._id });
+        const progress = await Progress.findOne({
+          learner: learnerId,
+          course: enr.course?._id || enr.course
+        });
+
         return {
           _id: enr._id,
           learner: enr.learner,
