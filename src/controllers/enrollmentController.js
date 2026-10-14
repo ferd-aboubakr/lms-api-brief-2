@@ -68,8 +68,9 @@ export async function enrollCourse(req, res, next) {
 
     if (!progress) {
       progress = await Progress.create({
-        learner: learnerId,
-        course: courseId,
+    
+       learner: learnerId,
+       course: courseId,
         enrollment: enrollment._id,
         completedResources: [],
         completedModules: [],
@@ -153,6 +154,35 @@ export async function listEnrollments(req, res, next) {
     next(error);
   }
 }
+
+export async function getEnrollmentById(req, res, next) {
+  try {
+    const { id } = req.params
+    const learnerId = req.user.id;
+
+    const enrollment = await Enrollment.findOne({
+      _id: id,
+      learner: learnerId
+    }).populate('course', 'title description level category duration status')
+    if (!enrollment) {
+      return res.status(404).json({
+        message: 'Enrollment not found'
+      });
+    }
+    const progress = (await Progress.findOne({
+      learner: learnerId,
+      course: enrollment.course._id
+    })) ;
+
+    return res.status(200).json({
+      enrollment,
+      progress
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 
 /**
  * CANCEL ENROLLMENT

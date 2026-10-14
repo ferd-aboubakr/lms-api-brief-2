@@ -4,7 +4,8 @@ import { authorize } from '../middlewares/authorize.js';
 import {
   enrollCourse,
   listEnrollments,
-  cancelEnrollment
+  cancelEnrollment,
+  getEnrollmentById
 } from '../controllers/enrollmentController.js'
 
 /**
@@ -33,6 +34,8 @@ router.get(
   authorize('learner'),
   listEnrollments
 );
+
+router.get('/:id', auth, authorize('learner'), getEnrollmentById);
 
 // DELETE /api/enrollments/:id - Cancel enrollment
 router.delete(

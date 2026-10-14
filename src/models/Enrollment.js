@@ -43,7 +43,14 @@ const enrollmentSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
+//prevent dups in enrollments : 
+enrollmentSchema.index(
+  { learner: 1, course: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: 'active' }
+  }
+);
 
 const Enrollment = mongoose.model('Enrollment', enrollmentSchema);
 
