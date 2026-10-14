@@ -5,7 +5,7 @@ import {
   enrollCourse,
   listEnrollments,
   cancelEnrollment
-} from '../controllers/enrollmentController.js';
+} from '../controllers/enrollmentController.js'
 
 /**
  * ENROLLMENT ROUTES
