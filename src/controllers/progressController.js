@@ -95,15 +95,7 @@ export async function markResourceComplete(req, res, next) {
                 message: 'You are not actively enrolled in this course',
             });
         }
-        // === Sequential Lock Guard ===
-        const allCourseModules = await Module.find({ course: courseId }).sort({ order: 1 });
-        const moduleState = getModuleState(progress, resource.module, allCourseModules);
-        if (moduleState === 'locked') {
-            return res.status(403).json({
-                message: 'Module is locked. You must complete previous modules first.',
-                currentModuleOrder: resource.module.order
-            });
-        }
+    
 
         // 3. Find or initialize progress
         let progress = await Progress.findOne({ learner: learnerId, course: courseId });
@@ -115,6 +107,15 @@ export async function markResourceComplete(req, res, next) {
                 completedResources: [],
                 completedModules: [],
                 progressPercentage: 0,
+            });
+        }
+         // === Sequential Lock Guard ===
+        const allCourseModules = await Module.find({ course: courseId }).sort({ order: 1 });
+        const moduleState = getModuleState(progress, resource.module, allCourseModules);
+        if (moduleState === 'locked') {
+            return res.status(403).json({
+                message: 'Module is locked. You must complete previous modules first.',
+                currentModuleOrder: resource.module.order
             });
         }
 
@@ -304,6 +305,97 @@ export async function completeModule(req, res, next) {
         currentModule: progress.currentModule,
       },
       courseCompleted: progress.progressPercentage === 100,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * GET GLOBAL COURSE PROGRESS
+ * Route: GET /api/courses/:id/progress
+ * Access: Private (learner)
+ */
+export async function getCourseProgress(req, res, next) {
+  try {
+    const courseId = req.params.id;
+    const learnerId = req.user.id;
+
+    // 1. Verify enrollment
+    const enrollment = await Enrollment.findOne({
+      learner: learnerId,
+      course: courseId,
+      status: { $in: ['active', 'completed'] },
+    });
+
+    if (!enrollment) {
+      return res.status(403).json({
+        message: 'You are not enrolled in this course',
+      });
+    }
+
+    // 2. Find progress document
+    let progress = await Progress.findOne({ learner: learnerId, course: courseId });
+    if (!progress) {
+      return res.status(404).json({
+        message: 'No progress record found for this course',
+      });
+    }
+
+    // 3. Fetch all modules of the course sorted by order
+    const allModules = await Module.find({ course: courseId }).sort({ order: 1 });
+
+    // 4. Map modules with their calculated status and resource counts
+    let nextAccessibleModule = null;
+
+    const modulesWithState = await Promise.all(
+      allModules.map(async (mod) => {
+        // Fetch resources belonging to this module
+        const moduleResources = await Resource.find({ module: mod._id });
+        const moduleResourceIds = moduleResources.map((r) => r._id.toString());
+
+        // Calculate state using getModuleState
+        const state = getModuleState(progress, mod, allModules, moduleResourceIds);
+
+        // Track next accessible / in_progress module
+        if (!nextAccessibleModule && (state === 'accessible' || state === 'in_progress')) {
+          nextAccessibleModule = {
+            _id: mod._id,
+            title: mod.title,
+            order: mod.order,
+          };
+        }
+
+        // Count how many resources are finished in this module
+        const completedInModule = moduleResourceIds.filter((resId) =>
+          progress.completedResources.some((cResId) => cResId.toString() === resId)
+        ).length;
+
+        return {
+          _id: mod._id,
+          title: mod.title,
+          order: mod.order,
+          duration: mod.duration,
+          state,
+          isLocked: state === 'locked',
+          totalResources: moduleResources.length,
+          completedResources: completedInModule,
+        };
+      })
+    );
+
+    // 5. Build response payload (ready for React)
+    return res.status(200).json({
+      courseId,
+      progressPercentage: progress.progressPercentage,
+      completedModulesCount: progress.completedModules.length,
+      totalModulesCount: allModules.length,
+      completedResourcesCount: progress.completedResources.length,
+      currentModule: progress.currentModule,
+      nextAccessibleModule: nextAccessibleModule || null,
+      lastAccessedResource: progress.lastAccessedResource,
+      lastAccessedAt: progress.lastAccessedAt,
+      modules: modulesWithState,
     });
   } catch (error) {
     next(error);
