@@ -1,0 +1,16 @@
+$kind: http-request
+url: http://localhost:3000/api/resources/6acd4faaad9ab239bfca60b5/6ace24187167ca9194980edb
+method: PUT
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: update resource
+      description: ""
+      disabled: false
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_10zd}}"
+order: 3683893440730554
